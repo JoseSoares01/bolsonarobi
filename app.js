@@ -519,6 +519,13 @@ function updateChart() {
 
     const chartContainer = document.getElementById('zone-share-chart');
     if (!chartContainer) return;
+    const isLightTheme = appState.theme === 'light';
+    const chartTextMuted = isLightTheme ? '#475569' : '#94a3b8';
+    const chartTextStrong = isLightTheme ? '#0f172a' : '#f8fafc';
+    const chartTextSoft = isLightTheme ? '#64748b' : '#64748b';
+    const radialTrackBg = isLightTheme ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.05)';
+    const donutStroke = isLightTheme ? '#e2e8f0' : '#0b1122';
+    const tooltipTheme = isLightTheme ? 'light' : 'dark';
 
     // 1. Destroy old chart if exists
     if (appState.zoneChart) {
@@ -549,7 +556,7 @@ function updateChart() {
                         startAngle: -90,
                         endAngle: 90,
                         track: {
-                            background: "rgba(255, 255, 255, 0.05)",
+                            background: radialTrackBg,
                             strokeWidth: '97%',
                             margin: 5,
                             dropShadow: { enabled: false }
@@ -560,7 +567,7 @@ function updateChart() {
                                 offsetY: -2,
                                 fontSize: '20px',
                                 fontWeight: '700',
-                                color: '#f8fafc',
+                                color: chartTextStrong,
                                 formatter: function(val) {
                                     return val + "%";
                                 }
@@ -573,7 +580,7 @@ function updateChart() {
                     text: `Percentual de Votos na Zona ${zoneNum}`,
                     align: 'center',
                     style: {
-                        color: '#94a3b8',
+                        color: chartTextMuted,
                         fontSize: '11px',
                         fontFamily: 'Inter'
                     }
@@ -601,7 +608,7 @@ function updateChart() {
             chart: {
                 type: 'donut',
                 height: 180,
-                foreColor: '#94a3b8',
+                foreColor: chartTextMuted,
                 fontFamily: 'Inter'
             },
             series: series,
@@ -610,7 +617,7 @@ function updateChart() {
             stroke: {
                 show: true,
                 width: 2,
-                colors: ['#0b1122']
+                colors: [donutStroke]
             },
             plotOptions: {
                 pie: {
@@ -623,13 +630,13 @@ function updateChart() {
                                 show: true,
                                 fontSize: '11px',
                                 fontWeight: '600',
-                                color: '#94a3b8'
+                                color: chartTextMuted
                             },
                             value: {
                                 show: true,
                                 fontSize: '14px',
                                 fontWeight: '800',
-                                color: '#f8fafc',
+                                color: chartTextStrong,
                                 formatter: function (val) {
                                     return parseInt(val).toLocaleString('pt-BR');
                                 }
@@ -639,7 +646,7 @@ function updateChart() {
                                 label: 'Votos Totais',
                                 fontSize: '10px',
                                 fontWeight: '700',
-                                color: '#64748b',
+                                color: chartTextSoft,
                                 formatter: function (w) {
                                     return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString('pt-BR');
                                 }
@@ -659,7 +666,7 @@ function updateChart() {
             },
             dataLabels: { enabled: false },
             tooltip: {
-                theme: 'dark',
+                theme: tooltipTheme,
                 y: {
                     formatter: function(val) {
                         return val.toLocaleString('pt-BR') + ' votos';
