@@ -741,6 +741,33 @@ body {
     color: var(--accent-blue) !important;
 }
 
+.mobile-boundary-label {
+    pointer-events: none;
+}
+
+.mobile-boundary-label span {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    font-family: var(--font-heading);
+    box-shadow: 0 4px 14px rgba(2, 6, 23, 0.35);
+    white-space: nowrap;
+}
+
+.mobile-boundary-label.zone span {
+    background: rgba(245, 158, 11, 0.92);
+    color: #111827;
+}
+
+.mobile-boundary-label.bairro span {
+    background: rgba(56, 189, 248, 0.92);
+    color: #082f49;
+}
+
 /* Custom styled Popups */
 .leaflet-popup-content-wrapper {
     background: rgba(15, 23, 42, 0.95) !important;
@@ -1023,6 +1050,26 @@ body {
 @media (max-width: 900px) {
     .dashboard-content {
         grid-template-columns: 1fr;
+    }
+
+    .map-panel {
+        order: -1;
+        min-height: 62vh;
+    }
+
+    .map-container-wrapper {
+        min-height: 52vh;
+    }
+
+    #map {
+        min-height: 52vh;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    body.light-theme #map {
+        border-top: 1px solid rgba(15, 23, 42, 0.12);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.12);
     }
     
     .sidebar-panel, .right-panel {

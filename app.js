@@ -16,6 +16,7 @@ let appState = {
     map: null,
     heatmapLayer: null,
     markerLayer: null,
+    boundaryLayer: null,
     markersMap: new Map(), // To find markers quickly by location name
     zoneChart: null,
     theme: 'dark', // 'dark' or 'light'
@@ -28,6 +29,7 @@ const DEFAULT_ZOOM = 12;
 const TILES_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 const TILES_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const MAP_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const MOBILE_BREAKPOINT = 900;
 
 /** Debounce ao digitar no modo “Só bairro”: mapa vai ao pico de intensidade do heatmap */
 let bairroMapFocusTimer = null;
@@ -95,6 +97,7 @@ function initMap() {
 
     // Initialize layers
     appState.markerLayer = L.featureGroup().addTo(appState.map);
+    appState.boundaryLayer = L.layerGroup().addTo(appState.map);
     
     // Setup Layer toggles in header
     const btnToggleHeat = document.getElementById('btn-toggle-heat');
@@ -111,6 +114,16 @@ function initMap() {
         btnToggleMarkers.classList.toggle('active', appState.showMarkers);
         updateMapLayers();
     });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+            if (!appState.map) return;
+            appState.map.invalidateSize();
+            renderMobileBoundaries();
+        }, 180);
+    });
 }
 
 function updateMapLayers() {
@@ -122,6 +135,9 @@ function updateMapLayers() {
     if (appState.heatmapLayer) {
         appState.map.removeLayer(appState.heatmapLayer);
         appState.heatmapLayer = null;
+    }
+    if (appState.boundaryLayer) {
+        appState.boundaryLayer.clearLayers();
     }
 
     // 2. Add Heatmap Layer if active
@@ -229,6 +245,97 @@ function updateMapLayers() {
             appState.markersMap.set(loc.local_votacao, marker);
         });
     }
+
+    renderMobileBoundaries();
+}
+
+function isMobileViewport() {
+    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+}
+
+function groupLocations(locations, getKey) {
+    const groups = new Map();
+    locations.forEach((loc) => {
+        const key = getKey(loc);
+        if (!key) return;
+        if (!groups.has(key)) {
+            groups.set(key, []);
+        }
+        groups.get(key).push(loc);
+    });
+    return groups;
+}
+
+function computeGroupCircle(groupLocs) {
+    const centerLat = groupLocs.reduce((acc, loc) => acc + loc.lat, 0) / groupLocs.length;
+    const centerLon = groupLocs.reduce((acc, loc) => acc + loc.lon, 0) / groupLocs.length;
+    const center = L.latLng(centerLat, centerLon);
+
+    let maxDistance = 0;
+    groupLocs.forEach((loc) => {
+        const d = appState.map.distance(center, L.latLng(loc.lat, loc.lon));
+        if (d > maxDistance) maxDistance = d;
+    });
+
+    const radius = Math.max(220, maxDistance * 1.35);
+    return { center, radius };
+}
+
+function renderMobileBoundaries() {
+    if (!appState.map || !appState.boundaryLayer) return;
+    appState.boundaryLayer.clearLayers();
+    if (!isMobileViewport() || appState.filteredLocations.length === 0) return;
+
+    const zoneGroups = groupLocations(appState.filteredLocations, (loc) => `Zona ${loc.nr_zona}`);
+    zoneGroups.forEach((locs, zoneLabel) => {
+        const { center, radius } = computeGroupCircle(locs);
+        L.circle(center, {
+            radius,
+            color: '#f59e0b',
+            weight: 2.2,
+            opacity: 0.75,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.07,
+            interactive: false
+        }).addTo(appState.boundaryLayer);
+        L.marker(center, {
+            interactive: false,
+            icon: L.divIcon({
+                className: 'mobile-boundary-label zone',
+                html: `<span>${zoneLabel}</span>`
+            })
+        }).addTo(appState.boundaryLayer);
+    });
+
+    const bairroGroups = Array.from(groupLocations(appState.filteredLocations, (loc) => loc.bairro).entries())
+        .filter(([, locs]) => locs.length >= 2)
+        .sort((a, b) => b[1].length - a[1].length);
+
+    const bairrosToRender =
+        appState.searchMode === 'bairro' && String(appState.searchQuery || '').trim()
+            ? bairroGroups.slice(0, 4)
+            : bairroGroups.slice(0, 8);
+
+    bairrosToRender.forEach(([bairro, locs]) => {
+        const { center, radius } = computeGroupCircle(locs);
+        L.circle(center, {
+            radius: Math.max(180, radius * 0.72),
+            color: '#38bdf8',
+            weight: 1.3,
+            opacity: 0.7,
+            fillColor: '#38bdf8',
+            fillOpacity: 0.04,
+            dashArray: '6 4',
+            interactive: false
+        }).addTo(appState.boundaryLayer);
+        L.marker(center, {
+            interactive: false,
+            icon: L.divIcon({
+                className: 'mobile-boundary-label bairro',
+                html: `<span>${bairro}</span>`
+            })
+        }).addTo(appState.boundaryLayer);
+    });
 }
 
 /**
