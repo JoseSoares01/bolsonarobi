@@ -5,6 +5,7 @@ import urllib.request
 import urllib.parse
 import ssl
 import random
+import re
 import pandas as pd
 import numpy as np
 
@@ -71,7 +72,8 @@ BAIRROS_KEYWORDS = {
     'Uruguai': ['URUGUAI'],
     'Vale Quem Tem': ['VALE QUEM TEM'],
     'Esplanada': ['ESPLANADA'],
-    'Porto Alegre': ['PORTO ALEGRE'],
+    'Porto Alegre': ['PORTO ALEGRE', 'P. ALEGRE', 'P ALEGRE'],
+    'Angelim': ['ANGELIM'],
     'Buenos Aires': ['BUENOS AIRES'],
     'Memorare': ['MEMORARE'],
     'Aeroporto': ['AEROPORTO'],
@@ -98,12 +100,44 @@ BAIRROS_KEYWORDS = {
     'Povoado (Zona Rural)': ['POVOADO', 'POV.', 'RURAL', 'Fazenda', 'ESTRADA', 'KM ']
 }
 
+def infer_bairro_from_text(text):
+    """Infer bairro from explicit fragments like 'BAIRRO X'."""
+    if not isinstance(text, str):
+        return None
+
+    # Capture only the direct neighborhood phrase after "BAIRRO"
+    m = re.search(r'\bBAIRRO\s+([A-ZÀ-ÖØ-Ý0-9\s\-]{3,})', text, flags=re.IGNORECASE)
+    if not m:
+        return None
+
+    raw = m.group(1).strip()
+    # Stop at common separators to avoid swallowing the full address/school name
+    raw = re.split(r'[,;/]| - | \(|\bS/N\b|\bSN\b|\bZONA\b|\bTERESINA\b', raw, maxsplit=1, flags=re.IGNORECASE)[0].strip(" .-")
+    if not raw:
+        return None
+
+    alias_map = {
+        'PORTO ALEGRE': 'Porto Alegre',
+        'ANGELIM': 'Angelim',
+    }
+    raw_upper = raw.upper()
+    if raw_upper in alias_map:
+        return alias_map[raw_upper]
+
+    # Fallback: return title-cased phrase for explicit bairro mentions.
+    return raw.title()
+
 def get_bairro(row):
     text = (str(row['_local_votacao']) + ' ' + str(row['_local_endereco'])).upper()
     for name, keys in BAIRROS_KEYWORDS.items():
         for k in keys:
             if k in text:
                 return name
+
+    inferred = infer_bairro_from_text(text)
+    if inferred:
+        return inferred
+
     # Fallback structure based on Electoral Zone
     fallback_map = {
         1: 'Zona Norte (Outros)',
