@@ -1,57 +1,54 @@
-# BolsonaroBI - Dashboard Eleitoral de Teresina (2022)
+# BolsonaroBI - Dashboard Eleitoral (Teresina + Piauí)
 
-Dashboard web interativo para explorar os resultados de votação de Jair Bolsonaro no 1o turno de 2022 em Teresina (PI), com foco em analise geoespacial por zona eleitoral, local de votacao e bairro.
+Dashboards web interativos para explorar votação de Jair Bolsonaro no 1º turno de 2022 no Piauí.
 
-## O que este projeto faz
+## Páginas
 
-- Processa dados de uma planilha oficial de locais de votacao.
-- Gera um arquivo `data.json` pronto para consumo no front-end.
-- Enriquce os dados com:
-  - `bairro` inferido por palavras-chave;
-  - coordenadas geograficas por geocodificacao;
-  - fallback inteligente por zona quando a geocodificacao falha.
-- Exibe um dashboard moderno com:
-  - mapa interativo (heatmap + marcadores);
-  - filtros por zona;
-  - busca por nome/endereco;
-  - modo de busca "So bairro";
-  - KPIs, ranking e insights dinamicos.
+| Página | URL | Escopo |
+|--------|-----|--------|
+| **Teresina** | `index.html` | Locais de votação na capital (mapa, bairros, zonas) |
+| **Piauí (Estado)** | `piaui.html` | 224 municípios — votos, comparecimento, abstenção, mapa de calor, estratégia de campanha |
 
-## Estrutura principal
+## Dados
 
-- `parse_data.py`: pipeline de processamento e geracao do `data.json`.
-- `data.json`: base consolidada usada pela interface.
-- `index.html`: estrutura da aplicacao.
-- `style.css`: estilos visuais.
-- `app.js`: logica do dashboard, filtros, mapa e graficos.
+- **Teresina:** planilha `Dados dos locais de votação por zona-1turno de 2022.xlsx` → `data.json`
+- **Estado:** `data/votacao_pi_bolsonaro_2022.csv` (TSE, por seção) → `data_pi.json`
+- **Mapa PI:** `geo/pi-municipios.geojson` (contornos municipais)
 
-## Como executar localmente
-
-1. (Opcional) Regenerar dados:
-   - Ajuste o arquivo de entrada no `parse_data.py` se necessario.
-   - Execute:
+## Como gerar os JSON
 
 ```bash
+# Teresina (geocodificação opcional; usa cache)
 python3 parse_data.py
+
+# Piauí inteiro (rápido, ~1s)
+python3 parse_pi_state.py
 ```
 
-2. Subir servidor local:
+CSV estadual: copie o arquivo TSE para `data/votacao_pi_bolsonaro_2022.csv` ou defina:
+
+```bash
+export PI_CSV_FILE="/caminho/para/votacao_secao-uf_2022_pi_presidente_jair_messias_bolsonaro.csv"
+python3 parse_pi_state.py
+```
+
+## Executar localmente
 
 ```bash
 python3 -m http.server 8765
 ```
 
-3. Abrir no navegador:
-   - `http://127.0.0.1:8765/`
+- Teresina: http://127.0.0.1:8765/
+- Piauí: http://127.0.0.1:8765/piaui.html
+
+## Dashboard Piauí — o que inclui
+
+- KPIs: votos, aptos, comparecimento, abstenções, percentual, municípios/seções
+- Mapa com **contorno por município** (cor = % Bolsonaro) + **heatmap** (votos, % ou abstenção)
+- Ranking municipal com ordenação por votos, %, abstenção ou **score de oportunidade**
+- Painel **“Onde atacar (Deputado Federal)”** com priorização por mobilização, conversão e volume
+- Insights automáticos (top votos, top %, abstenção, panorama estadual)
 
 ## Tecnologias
 
-- HTML, CSS e JavaScript puro
-- Leaflet + Leaflet.heat
-- ApexCharts
-- Python (pandas/numpy) para pipeline de dados
-
-## Observacoes
-
-- O projeto usa dados eleitorais agregados por local de votacao.
-- Coordenadas com `is_fallback: true` representam aproximacoes para preservar cobertura no mapa.
+HTML, CSS, JavaScript · Leaflet + heat · ApexCharts · Python/pandas

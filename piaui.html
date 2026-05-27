@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piauí | Dashboard Estadual Bolsonaro 2022</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <i data-lucide="map-pin" class="logo-icon"></i>
+                </div>
+                <div class="header-titles">
+                    <h1>PIAUÍ <span class="accent-text">DASHBOARD ESTADUAL</span></h1>
+                    <p class="subtitle">Bolsonaro · 1º Turno 2022 · 224 municípios · dados por seção (TSE)</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <nav class="nav-dashboard-links" aria-label="Navegação entre dashboards">
+                    <a href="index.html" class="nav-dash-link">Teresina</a>
+                    <a href="piaui.html" class="nav-dash-link active">Piauí (Estado)</a>
+                </nav>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Alternar Tema">
+                    <i data-lucide="sun" class="theme-toggle-icon"></i>
+                </button>
+                <div class="badge-item">
+                    <span class="badge-label">UF</span>
+                    <span class="badge-value">PI</span>
+                </div>
+                <div class="badge-item status-badge">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-value">TSE 2022</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="kpi-grid kpi-grid-6">
+            <div class="kpi-card glass-panel card-purple">
+                <div class="kpi-icon-wrapper"><i data-lucide="vote"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Votos Bolsonaro (PI)</span>
+                    <h2 class="kpi-value" id="kpi-votos">-</h2>
+                    <span class="kpi-subtext" id="kpi-votos-share">-</span>
+                </div>
+            </div>
+            <div class="kpi-card glass-panel card-blue">
+                <div class="kpi-icon-wrapper"><i data-lucide="users"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Eleitores Aptos</span>
+                    <h2 class="kpi-value" id="kpi-aptos">-</h2>
+                </div>
+            </div>
+            <div class="kpi-card glass-panel card-emerald">
+                <div class="kpi-icon-wrapper"><i data-lucide="user-check"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Comparecimento</span>
+                    <h2 class="kpi-value" id="kpi-comparecimento">-</h2>
+                    <span class="kpi-subtext" id="kpi-perc-comp">-</span>
+                </div>
+            </div>
+            <div class="kpi-card glass-panel card-amber">
+                <div class="kpi-icon-wrapper"><i data-lucide="user-x"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Abstenções</span>
+                    <h2 class="kpi-value" id="kpi-abstencoes">-</h2>
+                    <span class="kpi-subtext" id="kpi-perc-abst">-</span>
+                </div>
+            </div>
+            <div class="kpi-card glass-panel card-purple">
+                <div class="kpi-icon-wrapper"><i data-lucide="percent"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">% sobre nominais</span>
+                    <h2 class="kpi-value" id="kpi-percentual">-</h2>
+                    <div class="progress-bar-container" style="margin-top:0.35rem">
+                        <div class="progress-bar" id="kpi-percentual-bar" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card glass-panel card-blue">
+                <div class="kpi-icon-wrapper"><i data-lucide="building-2"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Municípios / Seções</span>
+                    <h2 class="kpi-value" id="kpi-municipios">-</h2>
+                    <span class="kpi-subtext" id="kpi-secoes">-</span>
+                </div>
+            </div>
+        </section>
+
+        <main class="dashboard-content">
+            <aside class="sidebar-panel">
+                <div class="panel-section glass-panel">
+                    <div class="section-header">
+                        <i data-lucide="sliders-horizontal" class="section-icon text-cyan"></i>
+                        <h3>Filtros</h3>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="search-municipio">Buscar município</label>
+                        <div class="search-input-wrapper">
+                            <i data-lucide="search" class="search-icon"></i>
+                            <input type="text" id="search-municipio" placeholder="Digite a cidade (ex.: Teresina) para ver os bairros..." autocomplete="off">
+                            <button id="clear-search" class="clear-search-btn" style="display:none"><i data-lucide="x"></i></button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-sublabel">Mapa de calor por</span>
+                        <div class="search-mode-controls">
+                            <button type="button" class="sort-tab active" id="heat-metric-votes">Votos</button>
+                            <button type="button" class="sort-tab" id="heat-metric-perc">%</button>
+                            <button type="button" class="sort-tab" id="heat-metric-abst">Abstenção</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section glass-panel flex-grow">
+                    <div class="section-header">
+                        <i data-lucide="target" class="section-icon text-amber"></i>
+                        <h3>Onde atacar (Deputado Federal)</h3>
+                    </div>
+                    <div class="insights-container" id="strategy-container"></div>
+                </div>
+
+                <div class="panel-section glass-panel flex-grow">
+                    <div class="section-header">
+                        <i data-lucide="sparkles" class="section-icon text-violet"></i>
+                        <h3>Insights estaduais</h3>
+                    </div>
+                    <div class="insights-container" id="insights-container"></div>
+                </div>
+            </aside>
+
+            <section class="map-panel glass-panel map-panel-pi">
+                <div class="map-header">
+                    <div class="map-title-wrapper">
+                        <i data-lucide="map" class="map-icon text-emerald"></i>
+                        <h3 id="map-panel-title">Mapa do Piauí — calor e municípios</h3>
+                    </div>
+                    <div class="map-view-controls">
+                        <div class="view-toggle-group">
+                            <button class="toggle-btn active" id="btn-toggle-choro" title="Contorno por município"><i data-lucide="layers"></i> Municípios</button>
+                            <button class="toggle-btn active" id="btn-toggle-heat" title="Mapa de calor"><i data-lucide="flame"></i> Calor</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="map-legend-pi glass-panel" id="map-legend-pi">
+                    <span class="legend-title">% Bolsonaro (nominais)</span>
+                    <div class="legend-gradient"></div>
+                    <div class="legend-labels"><span>Baixo</span><span>Médio</span><span>Alto</span></div>
+                </div>
+                <div class="map-container-wrapper">
+                    <div id="map"></div>
+                    <div class="map-overlay-info" id="map-overlay-info">Clique em qualquer município no mapa. Ao buscar, a região ao redor continua visível para explorar.</div>
+                </div>
+            </section>
+
+            <aside class="right-panel">
+                <div class="panel-section glass-panel">
+                    <div class="section-header">
+                        <i data-lucide="bar-chart-3" class="section-icon text-amber"></i>
+                        <h3 id="chart-panel-title">Top 10 municípios (votos)</h3>
+                    </div>
+                    <div class="chart-wrapper"><div id="top-municipios-chart"></div></div>
+                </div>
+                <div class="panel-section glass-panel flex-grow">
+                    <div class="section-header justify-between">
+                        <div class="flex-align-center">
+                            <i data-lucide="trophy" class="section-icon text-emerald"></i>
+                            <h3 id="ranking-panel-title">Ranking municipal</h3>
+                        </div>
+                        <div class="ranking-sort-controls">
+                            <button class="sort-tab active" id="sort-votes">Votos</button>
+                            <button class="sort-tab" id="sort-percent">%</button>
+                            <button class="sort-tab" id="sort-abst">Abst.</button>
+                            <button class="sort-tab" id="sort-opp">Oport.</button>
+                        </div>
+                    </div>
+                    <div class="leaderboard-list-wrapper">
+                        <div class="leaderboard-list" id="leaderboard-list"></div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="dashboard-footer-info">
+            <p>Dados: CSV TSE por seção (PI, presidente, Bolsonaro, 1º turno 2022). Contornos: malha municipal IBGE/geodata-br.</p>
+        </footer>
+    </div>
+    <script src="piaui.js"></script>
+</body>
+</html>
