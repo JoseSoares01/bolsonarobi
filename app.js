@@ -876,8 +876,21 @@ function highlightLeaderboardItem(name) {
     items.forEach(item => {
         if (item.dataset.name === name) {
             item.classList.add('active');
-            // Scroll to item inside list container
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Evita scroll da página no mobile ao clicar no mapa.
+            if (!isMobileViewport()) {
+                const list = item.closest('.leaderboard-list');
+                if (list) {
+                    const itemTop = item.offsetTop;
+                    const itemBottom = itemTop + item.offsetHeight;
+                    const viewTop = list.scrollTop;
+                    const viewBottom = viewTop + list.clientHeight;
+                    if (itemTop < viewTop) {
+                        list.scrollTo({ top: itemTop - 8, behavior: 'smooth' });
+                    } else if (itemBottom > viewBottom) {
+                        list.scrollTo({ top: itemBottom - list.clientHeight + 8, behavior: 'smooth' });
+                    }
+                }
+            }
         } else {
             item.classList.remove('active');
         }
