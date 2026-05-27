@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teresina | Dashboard Eleitoral Bolsonaro 2022</title>
+    
+    <!-- Google Fonts: Outfit (headings) and Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js CSS (Interactive Maps) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Lucide Icons (Clean minimal SVG icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- ApexCharts (Premium animated interactive charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- Leaflet.js JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet.heat plugin (Heatmap) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <i data-lucide="bar-chart-3" class="logo-icon"></i>
+                </div>
+                <div class="header-titles">
+                    <h1>TERESINA <span class="accent-text">DASHBOARD ELEITORAL</span></h1>
+                    <p class="subtitle">Análise Espacial de Votação (Bolsonaro - 1º Turno 2022)</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="theme-toggle" class="theme-toggle-btn" title="Alternar Tema (Claro/Escuro)">
+                    <i data-lucide="sun" class="theme-toggle-icon"></i>
+                </button>
+                <div class="badge-item">
+                    <span class="badge-label">ANO</span>
+                    <span class="badge-value">2022</span>
+                </div>
+                <div class="badge-item">
+                    <span class="badge-label">ESTADO</span>
+                    <span class="badge-value">PI</span>
+                </div>
+                <div class="badge-item">
+                    <span class="badge-label">MUNICÍPIO</span>
+                    <span class="badge-value">TERESINA</span>
+                </div>
+                <div class="badge-item status-badge">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-value">NÚMEROS OFICIAIS</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Grid -->
+        <section class="kpi-grid">
+            <!-- KPI 1 -->
+            <div class="kpi-card glass-panel card-purple">
+                <div class="kpi-icon-wrapper">
+                    <i data-lucide="vote"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Votos Totais (Bolsonaro)</span>
+                    <h2 class="kpi-value" id="kpi-total-votos">-</h2>
+                    <div class="kpi-footer">
+                        <span class="kpi-subtext" id="kpi-votos-perc-global">- de todos os locais</span>
+                    </div>
+                </div>
+            </div>
+            <!-- KPI 2 -->
+            <div class="kpi-card glass-panel card-blue">
+                <div class="kpi-icon-wrapper">
+                    <i data-lucide="users"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Votos Nominais Válidos</span>
+                    <h2 class="kpi-value" id="kpi-votos-nominais">-</h2>
+                    <div class="kpi-footer">
+                        <span class="kpi-subtext">Total geral de votos apurados</span>
+                    </div>
+                </div>
+            </div>
+            <!-- KPI 3 -->
+            <div class="kpi-card glass-panel card-emerald">
+                <div class="kpi-icon-wrapper">
+                    <i data-lucide="percent"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Percentual Geral de Votos</span>
+                    <h2 class="kpi-value" id="kpi-percentual-global">-</h2>
+                    <div class="kpi-footer">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="kpi-percentual-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- KPI 4 -->
+            <div class="kpi-card glass-panel card-amber">
+                <div class="kpi-icon-wrapper">
+                    <i data-lucide="map-pin"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Cobertura de Locais</span>
+                    <h2 class="kpi-value" id="kpi-locais-cobertos">-</h2>
+                    <div class="kpi-footer">
+                        <span class="kpi-subtext" id="kpi-zonas-cobertas">- Zonas Eleitorais</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Content Grid -->
+        <main class="dashboard-content">
+            
+            <!-- Column 1: Filters & Insights -->
+            <aside class="sidebar-panel">
+                <!-- Filters Glass Box -->
+                <div class="panel-section glass-panel">
+                    <div class="section-header">
+                        <i data-lucide="sliders-horizontal" class="section-icon text-cyan"></i>
+                        <h3>Filtros e Controles</h3>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Selecione a Zona Eleitoral</label>
+                        <div class="zone-buttons-grid" id="zone-filter-container">
+                            <button class="zone-btn active" data-zone="all">TODAS</button>
+                            <button class="zone-btn" data-zone="1">ZONA 01</button>
+                            <button class="zone-btn" data-zone="2">ZONA 02</button>
+                            <button class="zone-btn" data-zone="63">ZONA 63</button>
+                            <button class="zone-btn" data-zone="97">ZONA 97</button>
+                            <button class="zone-btn" data-zone="98">ZONA 98</button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label" for="search-input">Buscar Local de Votação</label>
+                        <div class="search-input-wrapper">
+                            <i data-lucide="search" class="search-icon"></i>
+                            <input type="text" id="search-input" placeholder="Digite o nome da escola ou endereço..." autocomplete="off">
+                            <button id="clear-search" class="clear-search-btn" style="display: none;">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <span class="filter-sublabel">Modo da busca</span>
+                        <div class="search-mode-controls" role="group" aria-label="Modo da busca">
+                            <button type="button" class="sort-tab active" id="search-mode-all" title="Busca no nome do local e no endereço">Nome / endereço</button>
+                            <button type="button" class="sort-tab" id="search-mode-bairro" title="Busca apenas no bairro inferido (Teresina)">Só bairro</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights Glass Box -->
+                <div class="panel-section glass-panel flex-grow">
+                    <div class="section-header">
+                        <i data-lucide="sparkles" class="section-icon text-violet"></i>
+                        <h3>Painel de Insights Inteligentes</h3>
+                    </div>
+                    <div class="insights-container" id="insights-container">
+                        <!-- Dynamically filled by JS -->
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Column 2: The Map Centerpiece -->
+            <section class="map-panel glass-panel">
+                <div class="map-header">
+                    <div class="map-title-wrapper">
+                        <i data-lucide="map" class="map-icon text-emerald"></i>
+                        <h3>Mapa Interativo Real de Teresina</h3>
+                    </div>
+                    <div class="map-view-controls">
+                        <span class="control-label">Visualização:</span>
+                        <div class="view-toggle-group">
+                            <button class="toggle-btn active" id="btn-toggle-heat" title="Alternar Mapa de Calor">
+                                <i data-lucide="flame"></i> Calor
+                            </button>
+                            <button class="toggle-btn active" id="btn-toggle-markers" title="Alternar Marcadores">
+                                <i data-lucide="navigation"></i> Locais
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="map-container-wrapper">
+                    <div id="map"></div>
+                    <div class="map-overlay-info" id="map-overlay-info">
+                        Clique em qualquer ponto no mapa ou na lista ao lado para ver detalhes.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Column 3: Leaderboards & Analytics -->
+            <aside class="right-panel">
+                
+                <!-- Zone Share Chart Box -->
+                <div class="panel-section glass-panel">
+                    <div class="section-header">
+                        <i data-lucide="pie-chart" class="section-icon text-amber"></i>
+                        <h3>Participação por Zona</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="zone-share-chart"></div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard Box -->
+                <div class="panel-section glass-panel flex-grow">
+                    <div class="section-header justify-between">
+                        <div class="flex-align-center">
+                            <i data-lucide="trophy" class="section-icon text-emerald"></i>
+                            <h3>Ranking de Locais</h3>
+                        </div>
+                        <div class="ranking-sort-controls">
+                            <button class="sort-tab active" id="sort-votes" title="Ordenar por total de votos Bolsonaro">
+                                Votos
+                            </button>
+                            <button class="sort-tab" id="sort-percent" title="Ordenar por percentual Bolsonaro">
+                                %
+                            </button>
+                        </div>
+                    </div>
+                    <div class="leaderboard-list-wrapper">
+                        <div class="leaderboard-list" id="leaderboard-list">
+                            <!-- Dynamically filled by JS -->
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+        </main>
+        
+        <!-- Footer Info -->
+        <footer class="dashboard-footer-info">
+            <p>&copy; 2026 - Teresina Eleitoral. Todos os dados são oficiais e correspondem ao primeiro turno da eleição presidencial de 2022. Desenvolvido para máxima fidelidade dos números.</p>
+        </footer>
+    </div>
+    
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
